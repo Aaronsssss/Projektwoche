@@ -3,6 +3,7 @@
 #include <Wire.h>
 
 #include "Controller.h"
+#include "StateController.h"
 
 #define FRONT (14)
 #define BACK (15)
@@ -10,44 +11,40 @@
 #define CENTER (90)
 #define RIGHTFORWARD (70)
 
+Controller controller;
 
-unsigned long duration;
-unsigned int distance;
-Controller *controller;
-
+uint32_t state;
 
 void setup() {
 	
-    controller = new Controller();
-    controller->RotateServo(FRONT,CENTER);
-  controller->RotateServo(BACK,CENTER);
+  //controller = new Controller();
+  state = 1;
+  controller.RotateServo(FRONT,CENTER);
+  controller.RotateServo(BACK,CENTER);
   //delay(4000);
-  //controller->RotateServo(FRONT,LEFTFORWARD);
-  //controller->RotateServo(BACK,RIGHTFORWARD);
-  
 }
 
 
 void loop(){
 	
-  //controller->MeasureDistance();
-  Serial.println("xxxDistance to object: " + controller->getDistance() + " cm\n");
+  //controller.MeasureDistance();
+  Serial.println("xxxDistance to object: " + StateController.getDistance() + " cm\n");
   delay(10);
   
-  controller->stepForward();
+  controller.stepForward();
  
   #if 0
   
-  //controller->moveForward();
+  //controller.moveForward();
 
 for(uint32_t i = 0; i < 20; i++)
 {
-  controller->moveLeft();
+  controller.moveLeft();
   delay(200);
 }
 for(uint32_t i = 0; i < 20; i++)
 {
-  controller->moveRight();
+  controller.moveRight();
   delay(200);
 }
 delay(1000);

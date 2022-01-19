@@ -50,7 +50,6 @@ class Controller {
     
   }
 
-  
   void Init() {
     
     Serial.begin(9600);
@@ -63,17 +62,17 @@ class Controller {
     Serial.println("Init done\n");
   }
 
+  
+  uint32_t CalculatePulse(uint32_t angle) {
+    uint32_t rv = angle*11.1+500;
 
-  
-  
-  String getDistance() {
-    return String(m_Distance);
+    //Serial.println("Pulse: "+ String(rv));
+    return rv;
   }
-
-
+ 
+  }  
   
-  
-  void MeasureDistance(){
+  uint32_t MeasureDistance(){
     uint32_t distance = 0;
     digitalWrite(PIN_TRIGGER, LOW);
     delayMicroseconds(2);
@@ -88,55 +87,8 @@ class Controller {
     if ( ( distance < SENSOR_MAX_RANGE ) || (distance > 0 ) ) {
       m_Distance = distance;
     }
+    return m_Distance;
   }
-
-
-  
-  
-  uint32_t CalculatePulse(uint32_t angle) {
-    uint32_t rv = angle*11.1+500;
-
-    //Serial.println("Pulse: "+ String(rv));
-    return rv;
-  }
-  
-
-
-  
-  uint32_t checkDirection() {
-    uint32_t rv = 0;
-   // Serial.println("left: "+ String( m_Distance[1])+" center: "+ String( m_Distance[2])+" right: "+ String( m_Distance[3]));
-
-
-    return rv;
-  }
-
-
-  
-  #if 0
-  void setDistance(uint32_t angle) {
-    switch(angle) {
-      case LEFTFORWARD:
-        m_Distance[1] = m_Distance[0];
-        break;
-      case CENTER:
-        m_Distance[2] = m_Distance[0];
-        checkDirection();
-        break;
-      case RIGHTFORWARD:
-        m_Distance[3] = m_Distance[0];
-          break;
-          
-      default:
-        break;
-      
-    }
-  }
-
-  #endif
-
-
-  
   
   void moveForward(){
     uint32_t walkSpeed = 50;
@@ -162,12 +114,10 @@ class Controller {
     RotateServo(BACK,LEFTFORWARD);
     delay(walkSpeed);
     
-    
     RotateServo(FRONT,CENTER);
     delay(100);
     RotateServo(BACK,CENTER);
     #endif
-    MeasureDistance(); // Update Distance
     delay(500);
   }
 
@@ -180,8 +130,6 @@ class Controller {
     delay(50);
     RotateServo(BACK, CENTER);
     delay(140);
-  
-    MeasureDistance(); 
   }
 
   void moveRight() {
@@ -193,19 +141,16 @@ class Controller {
     delay(50);
     RotateServo(BACK, CENTER);
     delay(140);
-    
-    MeasureDistance(); 
-    
   }
 
   void stepForward() {
-  for (int n = 0; n < 4; n++) {
+   for (int n = 0; n < 4; n++) {
     Serial.println("n: "+String(n));
     RotateServo(FRONT,walkingForward[n * 2]);
     RotateServo(BACK,walkingForward[(n * 2) + 1]);
     delay(STEP_DELAY);
   }
-  MeasureDistance(); 
+
 }
   
   
@@ -226,31 +171,6 @@ class Controller {
 #endif
     }
   }
-  
-  
-  #if 0
-  uint32_t getPulse(uint32_t state){
-    uint32_t rv = 0;
-    switch(state) {
-      case 0:
-        rv = SERVOMIN;
-        break;
-      case 1:
-        rv = SERVOMAX;
-        break;
-      default:
-        break;
-    }
-  }
-  #endif
-  
 
-  
-  
-  
-  
-  
-  
-  
 };
 #endif
