@@ -11,10 +11,26 @@
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define SENSOR_MAX_RANGE 300 // in cm
 
-
+#define MAXIMUM_DISTANCE 200
+#define SERVO_BACK_DISTANCE 60
+#define SERVO_FORWARD_DISTANCE 100
+#define SERVO_CENTRED 80
+#define STEP_DELAY 160
+#define STOP_DISTANCE 10  //stop distance in cm
 
 //#include <String.h>
+
+char walkingForward[] = {SERVO_BACK_DISTANCE, SERVO_FORWARD_DISTANCE,
+                         SERVO_FORWARD_DISTANCE, SERVO_FORWARD_DISTANCE,
+                         SERVO_FORWARD_DISTANCE, SERVO_BACK_DISTANCE,
+                         SERVO_BACK_DISTANCE, SERVO_BACK_DISTANCE
+                        };
 class Controller {  
+  private:
+  uint32_t m_Distance;
+  Adafruit_PWMServoDriver m_Pwm;
+
+  
   public:
   enum {
     FRONT        =  14,
@@ -22,11 +38,6 @@ class Controller {
     LEFTFORWARD  = 110,
     CENTER       =  90,
     RIGHTFORWARD =  70,
-    SERVO_BACK_DISTANCE = 60,
-    SERVO_FORWARD_DISTANCE = 100,
-    SERVO_CENTRED = 80,
-    
-    
   };
   
   typedef double float64_t;
@@ -38,10 +49,10 @@ class Controller {
   ~Controller(){
     
   }
-  
+
   
   void Init() {
-	  
+    
     Serial.begin(9600);
     pinMode(PIN_TRIGGER, OUTPUT);
     pinMode(PIN_ECHO, INPUT);
@@ -49,22 +60,17 @@ class Controller {
     m_Pwm.begin();
     //m_Pwm.setOscillatorFrequency(27000000);
     m_Pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
-    
-    m_Movements[0] = SERVO_BACK_DISTANCE;
-    m_Movements[1] = SERVO_FORWARD_DISTANCE;
-    m_Movements[2] = SERVO_FORWARD_DISTANCE;
-    m_Movements[3] = SERVO_FORWARD_DISTANCE;
-    m_Movements[4] = SERVO_FORWARD_DISTANCE;
-    m_Movements[5] = SERVO_BACK_DISTANCE;
-    m_Movements[6] = SERVO_BACK_DISTANCE;
-    m_Movements[7] = SERVO_BACK_DISTANCE;
     Serial.println("Init done\n");
   }
+
+
   
   
   String getDistance() {
-    return String(m_Distance[0]);
+    return String(m_Distance);
   }
+
+
   
   
   void MeasureDistance(){
@@ -80,9 +86,11 @@ class Controller {
     distance = (duration/58.0);
     
     if ( ( distance < SENSOR_MAX_RANGE ) || (distance > 0 ) ) {
-      m_Distance[0] = distance;
+      m_Distance = distance;
     }
   }
+
+
   
   
   uint32_t CalculatePulse(uint32_t angle) {
@@ -92,16 +100,20 @@ class Controller {
     return rv;
   }
   
+
+
   
   uint32_t checkDirection() {
     uint32_t rv = 0;
-    Serial.println("left: "+ String( m_Distance[1])+" center: "+ String( m_Distance[2])+" right: "+ String( m_Distance[3]));
+   // Serial.println("left: "+ String( m_Distance[1])+" center: "+ String( m_Distance[2])+" right: "+ String( m_Distance[3]));
 
 
     return rv;
   }
+
+
   
-  
+  #if 0
   void setDistance(uint32_t angle) {
     switch(angle) {
       case LEFTFORWARD:
@@ -120,13 +132,11 @@ class Controller {
       
     }
   }
-  void stepForward() {
-  for (int n = 0; n < 4; n++) {
-    RotateServo(FRONT,m_Movements[n * 2]);
-    RotateServo(BACK,m_Movements[(n * 2) + 1]);
-    delay(160);
-  }
-}
+
+  #endif
+
+
+  
   
   void moveForward(){
     uint32_t walkSpeed = 50;
@@ -160,41 +170,60 @@ class Controller {
     MeasureDistance(); // Update Distance
     delay(500);
   }
+
+  void moveLeft() {
+    Serial.println("Left");
+    RotateServo(BACK, 110);
+    RotateServo(FRONT, 140);
+    delay(100);
+    RotateServo(FRONT, CENTER);
+    delay(50);
+    RotateServo(BACK, CENTER);
+    delay(140);
+  
+    MeasureDistance(); 
+  }
+
+  void moveRight() {
+    Serial.println("Right");
+    RotateServo(BACK, 70);
+    RotateServo(FRONT, 40);
+    delay(100);
+    RotateServo(FRONT, CENTER);
+    delay(50);
+    RotateServo(BACK, CENTER);
+    delay(140);
+    
+    MeasureDistance(); 
+    
+  }
+
+  void stepForward() {
+  for (int n = 0; n < 4; n++) {
+    Serial.println("n: "+String(n));
+    RotateServo(FRONT,walkingForward[n * 2]);
+    RotateServo(BACK,walkingForward[(n * 2) + 1]);
+    delay(STEP_DELAY);
+  }
+  MeasureDistance(); 
+}
   
   
   void RotateServo(uint32_t id, uint32_t angle){
      //Serial.println("\nStart");
-    MeasureDistance(); // needed? 
-    setDistance(angle);
-    if(m_Distance[0] < 10){
-      
+    //setDistance(angle);
+    if(m_Distance < 10){
+      delay(10);
       //uint32_t pulseLen = getPulse(0);
-      Serial.println("STOOOP"+String(m_Distance[2]));
-      
+      Serial.println("STOOOP"+String(m_Distance));
+     moveRight();
     } else {
       
       #if 1
       //Serial.println("Move");
         uint32_t pulse = CalculatePulse(angle);
-        m_Pwm.writeMicroseconds(id, pulse);
-
-        
-     
-      #else
-      for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
-        m_Pwm.waitMicroSeconds(id, 0, pulselen);
-        //m_Pwm.setPWM(1, 0, SERVOMAX - pulselen);
-        //Serial.println("First: " + String(pulselen)+" Second: "+ String(SERVOMAX - pulselen));
-      }
-    
-      delay(2000);
-      for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
-        m_Pwm.setPWM(id, 0, pulselen );
-        //m_Pwm.setPWM(1, 0, pulselen );
-        //Serial.println("First: "+String(SERVOMAX - pulselen)+" Second: "+ String(pulselen));
-      }
-      delay(2000);
-      #endif
+       m_Pwm.writeMicroseconds(id, pulse);
+#endif
     }
   }
   
@@ -221,10 +250,7 @@ class Controller {
   
   
   
-  private:
-  uint32_t m_Distance[4];
-  Adafruit_PWMServoDriver m_Pwm;
-  uint32_t m_Movements[8];
+  
   
 };
 #endif

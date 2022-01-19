@@ -33,9 +33,26 @@ void loop(){
   //controller->MeasureDistance();
   Serial.println("xxxDistance to object: " + controller->getDistance() + " cm\n");
   delay(10);
-  #if 1
-  controller->stepForward();
   
-  delay(500);
+  controller->stepForward();
+ 
+  #if 0
+  
+  //controller->moveForward();
+
+for(uint32_t i = 0; i < 20; i++)
+{
+  controller->moveLeft();
+  delay(200);
+}
+for(uint32_t i = 0; i < 20; i++)
+{
+  controller->moveRight();
+  delay(200);
+}
+delay(1000);
+  
+  
+  
   #endif
 }
