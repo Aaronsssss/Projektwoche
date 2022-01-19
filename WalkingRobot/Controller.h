@@ -10,6 +10,9 @@
 #define USMAX  2400 // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define SENSOR_MAX_RANGE 300 // in cm
+
+
+
 //#include <String.h>
 class Controller {  
   public:
@@ -19,6 +22,11 @@ class Controller {
     LEFTFORWARD  = 110,
     CENTER       =  90,
     RIGHTFORWARD =  70,
+    SERVO_BACK_DISTANCE = 60,
+    SERVO_FORWARD_DISTANCE = 100,
+    SERVO_CENTRED = 80,
+    
+    
   };
   
   typedef double float64_t;
@@ -41,6 +49,15 @@ class Controller {
     m_Pwm.begin();
     //m_Pwm.setOscillatorFrequency(27000000);
     m_Pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+    
+    m_Movements[0] = SERVO_BACK_DISTANCE;
+    m_Movements[1] = SERVO_FORWARD_DISTANCE;
+    m_Movements[2] = SERVO_FORWARD_DISTANCE;
+    m_Movements[3] = SERVO_FORWARD_DISTANCE;
+    m_Movements[4] = SERVO_FORWARD_DISTANCE;
+    m_Movements[5] = SERVO_BACK_DISTANCE;
+    m_Movements[6] = SERVO_BACK_DISTANCE;
+    m_Movements[7] = SERVO_BACK_DISTANCE;
     Serial.println("Init done\n");
   }
   
@@ -103,7 +120,13 @@ class Controller {
       
     }
   }
-  
+  void stepForward() {
+  for (int n = 0; n < 4; n++) {
+    RotateServo(FRONT,m_Movements[n * 2]);
+    RotateServo(BACK,m_Movements[(n * 2) + 1]);
+    delay(160);
+  }
+}
   
   void moveForward(){
     uint32_t walkSpeed = 50;
@@ -201,6 +224,7 @@ class Controller {
   private:
   uint32_t m_Distance[4];
   Adafruit_PWMServoDriver m_Pwm;
+  uint32_t m_Movements[8];
   
 };
 #endif
