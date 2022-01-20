@@ -7,7 +7,9 @@ class StateController() {
   private:
   uint32_t m_Distance;
   Controller m_Controller;
-  uint32_t m_State
+  uint32_t m_State;
+  uint32_t m_EscapeDistanceWalk = 40;
+  uint32_t m_EscapeDistanceTurn = 60;
   /*
    * 1 == MoveForward
    * 2 == Drehen (vorbereitung)
@@ -16,6 +18,12 @@ class StateController() {
    */
   
   public:
+  enum {
+    FORWARD     = 1,
+    TURN        = 2,
+    RIGHTTURN   = 3,
+    LEFTTURN
+  }
   
   StateController() {
     m_State = 1;
@@ -26,6 +34,7 @@ class StateController() {
   void checkState() {
     
     uint32_t distance = m_Controller.MeasureDistance();
+    if (m_Distance < 60 && m_Distance >40)
     if (m_State = 1 && m_Distance > 40) {
       
     } else if (distance < 40 && m_State = 1) {
