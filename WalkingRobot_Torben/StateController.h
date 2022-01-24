@@ -48,7 +48,7 @@ class StateController
   void StateMachine() 
   {
     uint32_t distanceResult;
-   
+    bool validResult = false;
     //m_Controller->testMove();
       switch(m_State)
       {
@@ -85,8 +85,12 @@ class StateController
           break;
           case STM_MEASURE_DISTANCE:
           
-            m_Controller->MeasureDistance();
-            m_State = STM_VALIDATE_DISTANCE;
+            validResult = m_Controller->MeasureDistance();
+            if(validResult)
+            {
+              m_State = STM_VALIDATE_DISTANCE;
+              validResult = false;
+            }
           break;
         case STM_VALIDATE_DISTANCE:
           distanceResult = m_Controller->getDistance();

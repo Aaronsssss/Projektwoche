@@ -10,8 +10,13 @@
 
 #define PIN_SERVO1 (9)
 #define PIN_SERVO2 (10)
+#if 1
 #define PIN_TRIGGER 13
 #define PIN_ECHO    12
+#else
+#define PIN_TRIGGER 12
+#define PIN_ECHO    13
+#endif
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define SENSOR_MAX_RANGE 300 // in cm
 
@@ -154,17 +159,20 @@ Serial.println("DEBUG1 hallo");
 #ifdef WRAPPERACTIVE
 	int32_t distance = (rand() % 100);
 	//Serial.println("Random distance value: "+ String(distance));
-	void 
+	bool 
 	MeasureDistance()
 	{
+    bool rv = true;
 	  m_Distance = distance + ( rand() % 80 );
     m_Distance = ( m_Distance < 1) ? STOP_DISTANCE : m_Distance;
     //Serial.println("Random distance value: "+ String(m_Distance));
     m_Da->ProceedValue(m_Distance);
+    return rv;
   }
 
 #else
-  void MeasureDistance(){
+  bool MeasureDistance(){
+    bool rv = false;
     uint32_t distance = 0;
     digitalWrite(PIN_TRIGGER, LOW);
     delayMicroseconds(2);
@@ -180,6 +188,7 @@ Serial.println("DEBUG1 hallo");
     if ( ( distance < SENSOR_MAX_RANGE ) && (distance > 0 ) ) {
       //Serial.println("Valid");
       m_Da->ProceedValue(distance);
+      rv = true;
     }
   }
 #endif
