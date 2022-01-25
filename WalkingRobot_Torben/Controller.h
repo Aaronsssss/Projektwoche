@@ -8,8 +8,6 @@
 
 
 
-#define PIN_SERVO1 (9)
-#define PIN_SERVO2 (10)
 #if 1
 #define PIN_TRIGGER 13
 #define PIN_ECHO    12
@@ -106,8 +104,8 @@ Serial.println("DEBUG1 hallo");
 #if 1
     pinMode(PIN_TRIGGER, OUTPUT);
     pinMode(PIN_ECHO, INPUT);
-    m_Front.attach(10,500,2500);
-    m_Back.attach(9,500,2500);
+    m_Front.attach(FRONT,500,2500);
+    m_Back.attach(BACK,500,2500);
     Serial.println("Attached");
 
 #else
@@ -190,6 +188,7 @@ Serial.println("DEBUG1 hallo");
       m_Da->ProceedValue(distance);
       rv = true;
     }
+    return rv;
   }
 #endif
   
