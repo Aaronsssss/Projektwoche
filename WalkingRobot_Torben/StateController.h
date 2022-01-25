@@ -23,6 +23,7 @@ class StateController
     STM_MEASURE_DISTANCE,
     STM_VALIDATE_DISTANCE,
     STM_CHOOSE_DIRECTION,
+    STM_CHECK_CONTINUE,
     
     ACTION_MOVE_FORWARD,
     TURN_UNTIL_FAILTURE = 30,
@@ -49,12 +50,27 @@ class StateController
   {
     uint32_t distanceResult;
     bool validResult = false;
+    uint32_t programmStatus = 0;
     //m_Controller->testMove();
       switch(m_State)
       {
         default: /// fallthough
-        
+
+        case STM_CHECK_CONTINUE:
+          m_Controller->checkButton();
+          programmStatus = m_Controller->getProgrammState();
+          if(programmStatus>0)
+          {
+            validResult = false;
+            m_State = STM_MEASURE_DISTANCE;
+          }
+          else
+          {
+            Serial.println("Wait for activation");
+          }
+          break;
         case STM_MOVE_CENTER:
+        m_Controller->setColor(5);
         #if 1
           m_Controller->RotateServo(Controller::FRONT,Controller::CENTER);
           m_Controller->RotateServo(Controller::BACK,Controller::CENTER);
@@ -70,7 +86,7 @@ class StateController
           m_Controller->RotateServo(Controller::BACK,180);
           delay(2000);
           #endif
-          m_State = STM_MEASURE_DISTANCE;
+          m_State = STM_CHECK_CONTINUE;
           //m_State = STM_MOVE_CENTER;
           break;
           #if 0
@@ -105,6 +121,7 @@ class StateController
              
             Serial.println("Move Forward");
             m_Controller->stepForward();
+            m_WalkDirection = 0;
             m_State = STM_MEASURE_DISTANCE;
           }
           
@@ -137,5 +154,6 @@ class StateController
     
   
   }
+  
 };
 #endif

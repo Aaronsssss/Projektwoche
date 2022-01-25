@@ -3,6 +3,7 @@
 #include <inttypes.h>
 //#include <Adafruit_PWMServoDriver.h>
 #include "DataAnalyse.h"
+#include "ColorController.h"
 #include <Servo.h>
 #include <stdlib.h>
 
@@ -15,6 +16,9 @@
 #define PIN_TRIGGER 12
 #define PIN_ECHO    13
 #endif
+#define PIN_TOUCH 8
+
+#define SENSOR_TOUCH_MAX_DELAY (300)
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define SENSOR_MAX_RANGE 300 // in cm
 
@@ -25,7 +29,7 @@
 #define STOP_DISTANCE 10  //stop distance in cm
 
 //#include <String.h>
-//#define WRAPPERACTIVE
+#define WRAPPERACTIVE
 
 #ifdef DANCE
 char walkingForward[] = {50, 105,
@@ -58,11 +62,20 @@ char walkingForward[] = {SERVO_BACK_DISTANCE, SERVO_FORWARD_DISTANCE,
 class Controller {  
   private:
   DataAnalyse *m_Da;
+  ColorController * m_Color;
   int32_t m_Distance;
   uint32_t m_ValidDistance;
   uint32_t m_WalkDirection;
+  uint32_t m_SelectedProgramm;
   Servo m_Front;
   Servo m_Back;
+  uint32_t lastState;      // the previous state from the input pin
+  uint32_t currentState;         // the current reading from the input pin
+  uint32_t timestamp;
+  uint32_t timeNow;
+  uint32_t timeDif;
+  uint32_t selector;
+  uint32_t counter;
 #ifndef WRAPPERACTIVE
   //Adafruit_PWMServoDriver m_Pwm;
   
@@ -85,7 +98,7 @@ class Controller {
   
   typedef double float64_t;
   
-  Controller() {
+  Controller() : lastState(LOW),currentState(0),timestamp(0),counter(0){
     
   }
   ~Controller(){
@@ -99,6 +112,7 @@ class Controller {
   void Init() {
     Serial.println("Ab hier ist der Fehler");
     m_Da = new DataAnalyse();
+    m_Color = new ColorController();
 #ifndef WRAPPERACTIVE
 Serial.println("DEBUG1 hallo");
 #if 1
@@ -107,7 +121,7 @@ Serial.println("DEBUG1 hallo");
     m_Front.attach(FRONT,500,2500);
     m_Back.attach(BACK,500,2500);
     Serial.println("Attached");
-
+    
 #else
     pinMode(PIN_TRIGGER, OUTPUT);
     pinMode(PIN_ECHO, INPUT);
@@ -140,14 +154,20 @@ Serial.println("DEBUG1 hallo");
       default:
         break;
       case ACTION_TURN_LEFT:
+      m_Color->setColor(walkdirection);
         //walkBackAndTurnLeft();
         moveLeft();
         break;
       case ACTION_TURN_RIGHT:
+      m_Color->setColor(walkdirection);
         moveRight();
         break;
     }
     
+  }
+  void setColor(uint32_t id)
+  {
+    m_Color->setColor(id);
   }
   uint32_t getDistance()
   {
@@ -161,7 +181,7 @@ Serial.println("DEBUG1 hallo");
 	MeasureDistance()
 	{
     bool rv = true;
-	  m_Distance = distance + ( rand() % 80 );
+	  m_Distance = distance + ( rand() % 20 );
     m_Distance = ( m_Distance < 1) ? STOP_DISTANCE : m_Distance;
     //Serial.println("Random distance value: "+ String(m_Distance));
     m_Da->ProceedValue(m_Distance);
@@ -170,6 +190,7 @@ Serial.println("DEBUG1 hallo");
 
 #else
   bool MeasureDistance(){
+    m_Color->setColor(3);
     bool rv = false;
     uint32_t distance = 0;
     digitalWrite(PIN_TRIGGER, LOW);
@@ -218,6 +239,7 @@ Serial.println("DEBUG1 hallo");
 
   void stepForward() 
   {
+    m_Color->setColor(4);
     for (int n = 0; n < 4; n++) 
     {
       RotateServo(FRONT,walkingForward[n * 2]);
@@ -245,7 +267,7 @@ void walkBackAndTurnLeft()  {
   {
      uint32_t pulse = CalculatePulse(angle);
 #ifdef WRAPPERACTIVE
-     Serial.println("Angle " + String(pulse) + " at id " + String(id) + ". ");
+     //Serial.println("Angle " + String(pulse) + " at id " + String(id) + ". ");
 #else
     if( id == FRONT)
     {
@@ -256,6 +278,34 @@ void walkBackAndTurnLeft()  {
       m_Back.write(pulse);
     }
 #endif
+  }
+  uint32_t getProgrammState()
+  {
+    return m_SelectedProgramm;
+  }
+  void checkButton()
+  {
+    bool rv = false;
+    currentState = digitalRead(PIN_TOUCH);
+  
+     if(lastState == LOW && currentState == HIGH || lastState == HIGH && currentState == LOW)//
+     {
+        m_SelectedProgramm++;
+        rv = true;
+        timeNow = millis();
+
+        timeDif = timeNow - timestamp;
+        timestamp = timeNow;
+        uint32_t resetTime = SENSOR_TOUCH_MAX_DELAY;
+        if(timeDif < resetTime )
+        {
+          m_SelectedProgramm = 0;
+      
+        }
+        Serial.println("Selected value is" + String(counter)+ " Time dif: "+ String(timeDif)+" Reset time: "+ String(resetTime));
+        
+     }
+     lastState = currentState;
   }
 
 
